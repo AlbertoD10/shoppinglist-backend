@@ -1,30 +1,47 @@
 CREATE TABLE Users (
     user_id int PRIMARY KEY NOT NULL AUTO_INCREMENT,
     nickname varchar(50) NOT NULL UNIQUE,
-    password varchar(50) NOT NULL,
+    password varchar(255) NOT NULL,
     email varchar(50) UNIQUE,
     name varchar(50)
 );
 
 CREATE TABLE Permission(
-    permission_id int PRIMARY KEY NOT NULL AUTO_INCREMENT,
+    list_id_perm int NOT NULL,
     user_id_perm int NOT NULL,
-    user_granted_perm int NOT NULL,
+    user_granted_perm int,
+    PRIMARY KEY(user_id_perm, list_id_perm),
     CONSTRAINT fk_userid_perm
-        FOREIGN KEY (user_id_perm) REFERENCES Users(user_id)
-
+        FOREIGN KEY (user_id_perm) REFERENCES Users(user_id),
+    CONSTRAINT fk_list_id_perm
+         FOREIGN KEY (list_id_perm) REFERENCES ListProducts(list_id)
 );
+
+CREATE TABLE ListProducts(
+    list_id int PRIMARY KEY NOT NULL AUTO_INCREMENT,
+    list_name varchar(50) NOT NULL,
+    user_id_li int NOT NULL,
+    CONSTRAINT fk_user_id_li
+        FOREIGN KEY (user_id_li) REFERENCES Users(user_id)
+);
+
+INSERT INTO ListProducts (list_name, user_id_li) VALUES ("Prueba", 1);
+INSERT INTO ListProducts (list_name, user_id_li) VALUES ("Otra lista", 21);
+
 
 CREATE TABLE Products (
     product_id int PRIMARY KEY NOT NULL AUTO_INCREMENT,
     product_name varchar(50) NOT NULL,
     product_price float,
     quantity int,
-    user_id_prod int NOT NULL,
-    user_granted_prod int NOT NULL,
-    CONSTRAINT fk_user_id_prod
-        FOREIGN KEY (user_id_prod) REFERENCES Users(user_id)
+    list_id_prod int NOT NULL,
+    CONSTRAINT fk_list_id_prod
+        FOREIGN KEY (list_id_prod) REFERENCES ListProducts(list_id)
 );
+
+UPDATE Products
+SET product_name = "Hola" 
+WHERE list_id_prod = 3 AND product_id = 16;
 
 CREATE TABLE Saved_Products(
     product_id int PRIMARY KEY NOT NULL AUTO_INCREMENT,

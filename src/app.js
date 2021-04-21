@@ -3,7 +3,8 @@ const bodyParser = require("body-parser");
 const { API_VERSION } = require("./config");
 
 //Import the routes
-const authController = require("./routes/auth");
+const AuthController = require("./routes/auth");
+const ProductsController = require("./routes/products");
 
 const app = express();
 
@@ -17,6 +18,7 @@ app.use(bodyParser.json());
 //Configure Headers
 
 // Use all the routes defined in routes
-app.use(`/api/${API_VERSION}`, authController);
+app.use(`/api/${API_VERSION}`, AuthController);
+app.use(`/api/${API_VERSION}`, ProductsController);
 
 module.exports = app;

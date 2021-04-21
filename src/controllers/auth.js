@@ -1,136 +1,54 @@
-const Auth = require("../models/auth");
+const Sign = require("../models/auth");
+const bcrypt = require("bcrypt");
+const saltRounds = 10;
+const jwt = require("../services/jwt");
 
 function SignUp(req, res) {
-  const newUser = {
+  const password = req.body.password;
+  let newUser = {
     nickname: req.body.nickname,
-    password: req.body.password,
+    password: "",
     email: req.body.email,
   };
 
-  //Send the data to the model and  get a callback with the response of the DB
-  Auth.SignUpModel(newUser, (result) => {
-    console.log(result);
-    res.status(result.status).send(result);
+  bcrypt.hash(password, saltRounds, function (err, hash) {
+    if (err) {
+      res.status(500).send({ message: "Ha ocurrido un error", status: 500 });
+    } else {
+      newUser.password = hash;
+      //Send the data to the model and  get a callback with the response of the DB
+      Sign.SignUpModel(newUser, (result) => {
+        console.log(result);
+        res.status(result.status).send(result);
+      });
+    }
   });
+}
 
-  // /* This is a shortcut for the pool.getConnection() -> connection.query() -> connection.release()
-  //  code flow. Using pool.getConnection() is useful to share connection state for subsequent queries.
-  //   This is because two calls to pool.query() may use two different connections and run in parallel.*/
-
-  // pool.getConnection((err, connection) => {
-  //   if (err) throw err; //not connected
-
-  //   //Verify if the user exists in the DB
-  //   connection.query(
-  //     "SELECT nickname, email from Users WHERE nickname = ? OR email = ? ",
-  //     [newUser.nickname, newUser.email],
-  //     (err, results) => {
-  //       if (err) {
-  //         res
-  //           .status(500)
-  //           .send({ message: "Ha ocurrido un error.", status: 500 });
-  //       }
-
-  //       if (results.length > 0) {
-  //         let message = {};
-  //         results.forEach((item) => {
-  //           if (item.nickname === newUser.nickname) {
-  //             message = {
-  //               ...message,
-  //               nickname: "Este nombre de usuario ya existe.",
-  //             };
-  //             console.log("ENTRO MSG");
-  //           }
-  //           if (item.email === newUser.email) {
-  //             message = {
-  //               ...message,
-  //               email: "Este email ya está registrado.",
-  //             };
-  //             console.log("ENTRO EMAIL");
-  //           }
-  //           console.log(message);
-  //         });
-  //         res.status(422).send({ message, status: 422 });
-  //       } else {
-  //         // res.status(200).json({ message: "ok", status: 200 });
-
-  //         //Save the user in the DB
-  //         connection.query(
-  //           "INSERT INTO Users (nickname, password, email) VALUES (?, ?, ?)",
-  //           [newUser.nickname, newUser.password, newUser.email],
-  //           (err, results) => {
-  //             if (err) {
-  //               if (err.code === "ER_DUP_ENTRY") {
-  //                 res
-  //                   .status(500)
-  //                   .send({ message: "Este usuario ya existe.", err });
-  //               } else {
-  //                 res.status(404).send({
-  //                   message: "Ha ocurrido un error, vuelva a intentar.",
-  //                   err,
-  //                 });
-  //               }
-  //             } else {
-  //               res
-  //                 .status(200)
-  //                 .send({ message: "Usuario creado.", status: 200 });
-  //             }
-  //           }
-  //         );
-  //         // When done with the connection, release it.
-  //         connection.release();
-  //       }
-  //     }
-  //   );
-  // });
-
-  // pool.query(
-  //   "SELECT nickname, email from Users WHERE nickname = ? OR email = ? ",
-  //   [newUser.nickname, newUser.email],
-  //   (err, results) => {
-  //     if (err) {
-  //       res.status(500).send({ message: "Ha ocurrido un error.", status: 500 });
-  //     }
-  //     if (results.length > 0) {
-  //       let message = {};
-  //       results.forEach((item) => {
-  //         if (item.nickname === newUser.nickname)
-  //           message = {
-  //             nickname: "Este nombre de usuario ya existe.",
-  //           };
-  //         if (item.email === newUser.email)
-  //           message = {
-  //             email: "Este email ya está registrado.",
-  //           };
-  //       });
-  //       res.status(422).send({ message, status: 422 });
-  //     } else {
-  //       res.status(200).json({ message: "ok", status: 200 });
-  //     }
-  //   }
-  // );
-
-  //Save the user in the DB
-  //   pool.query(
-  //     "INSERT INTO Users (nickname, password, email) VALUES (?, ?, ?)",
-  //     [newUser.nickname, newUser.password, newUser.email],
-  //     (err, results) => {
-  //       if (err) {
-  //         if (err.code === "ER_DUP_ENTRY") {
-  //           res.status(500).send({ message: "Este usuario ya existe.", err });
-  //         } else {
-  //           res.status(404).send({
-  //             message: "Ha ocurrido un error, vuelva a intentar.",
-  //             err,
-  //           });
-  //         }
-  //       } else {
-  //         res.status(200).send({ results, status: 200 });
-  //       }
-  //     }
-  //   );
+function Login(req, res) {
+  const user = req.body;
+  Sign.LoginModel(user, (result) => {
+    bcrypt.compare(user.password, result.password, function (err, isValid) {
+      if (err) {
+        createAccessToken;
+        console.log(err);
+        res.status(500).send({ message: "Ha ocurrido un error", status: 500 });
+      } else {
+        if (isValid) {
+          jwt.createAccessToken(result.user_id);
+          jwt.createRefreshToken(result.user_id);
+          res.status(200).send({ message: "Bienvenido", status: 200 });
+        } else {
+          res
+            .status(404)
+            .send({ message: "Contraseña incorrecta", status: 500 });
+        }
+      }
+    });
+  });
 }
 
 module.exports = {
   SignUp,
+  Login,
 };

@@ -30,7 +30,6 @@ function Login(req, res) {
   Sign.LoginModel(user, (result) => {
     bcrypt.compare(user.password, result.password, function (err, isValid) {
       if (err) {
-        createAccessToken;
         console.log(err);
         res.status(500).send({ message: "Ha ocurrido un error", status: 500 });
       } else {
